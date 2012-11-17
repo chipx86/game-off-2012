@@ -160,7 +160,7 @@ MS.Terminal = Backbone.Model.extend({
         buffer: null
     },
 
-    promptStr: '> ',
+    promptStr: '\n> ',
 
     initialize: function() {
         this._lineBuffer = '';
@@ -223,8 +223,8 @@ MS.Terminal = Backbone.Model.extend({
         var line = this._lineBuffer;
         this._appendText('\n');
         this._lineBuffer = '';
-        this.trigger('lineEntered', line);
         this.showPrompt();
+        this.trigger('lineEntered', line);
     },
 
     _backspace: function() {
