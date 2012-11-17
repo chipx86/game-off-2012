@@ -9,64 +9,6 @@ MS.KeyCodes = {
 };
 
 
-MS.CommandInterpreter = Backbone.Model.extend({
-    defaults: {
-        game: null
-    },
-
-    commands: [
-        ['^(go )?n(orth)?$', '_goNorth'],
-        ['^(go )?s(outh)?$', '_goSouth'],
-        ['^(go )?e(east)?$', '_goEast'],
-        ['^(go )?w(west)?$', '_goWest']
-    ],
-
-    initialize: function() {
-        var newCommands = [];
-
-        _.each(this.commands, function(item) {
-            var r = new RegExp(item[0]);
-            r.compile(r);
-            newCommands.push([r, item[1]]);
-        });
-
-        this.commands = newCommands;
-    },
-
-    handleCommand: function(line) {
-        var len = this.commands.length,
-            i;
-
-        for (i = 0; i < len; i++) {
-            var item = this.commands[i],
-                m = item[0].exec(line);
-
-            if (m) {
-                this[item[1]](m);
-
-                return true;
-            }
-        }
-
-        return false;
-    },
-
-    _goNorth: function() {
-        this.get('game').terminal.writeLine('Hello!');
-    },
-
-    _goSouth: function() {
-        console.log('south');
-    },
-
-    _goEast: function() {
-        console.log('east');
-    },
-
-    _goWest: function() {
-        console.log('west');
-    }
-});
 
 
 MS.Terminal = Backbone.Model.extend({
@@ -244,15 +186,27 @@ MS.Game = Backbone.Model.extend({
         "Somebody put you in an underground minefield."
     ].join('\n'),
 
+    commands: [
+        ['^(go )?n(orth)?$', '_goNorth'],
+        ['^(go )?s(outh)?$', '_goSouth'],
+        ['^(go )?e(east)?$', '_goEast'],
+        ['^(go )?w(west)?$', '_goWest']
+    ],
+
     initialize: function() {
+        var newCommands = [];
+
         this.terminal = new MS.Terminal();
-        this.commandInterpreter = new MS.CommandInterpreter({
-            game: this
+
+        this.terminal.on('lineEntered', this._handleCommand, this);
+
+        _.each(this.commands, function(item) {
+            var r = new RegExp(item[0]);
+            r.compile(r);
+            newCommands.push([r, item[1]]);
         });
 
-        this.terminal.on('lineEntered', function(line) {
-            this.commandInterpreter.handleCommand(line);
-        }, this);
+        this.commands = newCommands;
     },
 
     run: function() {
@@ -262,6 +216,36 @@ MS.Game = Backbone.Model.extend({
         this.terminal.writeLine(this.introText);
         this.terminal.writeLine();
         this.terminal.showPrompt();
+    },
+
+    _handleCommand: function(line) {
+        var len = this.commands.length,
+            i;
+
+        for (i = 0; i < len; i++) {
+            var item = this.commands[i],
+                m = item[0].exec(line);
+
+            if (m) {
+                this[item[1]](m);
+
+                return true;
+            }
+        }
+
+        return false;
+    },
+
+    _goNorth: function() {
+    },
+
+    _goSouth: function() {
+    },
+
+    _goEast: function() {
+    },
+
+    _goWest: function() {
     }
 });
 
