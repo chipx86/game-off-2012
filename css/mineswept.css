@@ -1,0 +1,12 @@
+body {
+  background: #333333;
+  margin: 0;
+}
+
+#terminal {
+  color: #00DD00;
+  font-weight: bold;
+  padding: 1em;
+  margin: 0;
+  height: 0;
+}
