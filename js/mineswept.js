@@ -392,8 +392,8 @@ MS.Game = Backbone.Model.extend({
     commands: [
         ['^(go )?n(orth)?$', '_goNorth'],
         ['^(go )?s(outh)?$', '_goSouth'],
-        ['^(go )?e(east)?$', '_goEast'],
-        ['^(go )?w(west)?$', '_goWest']
+        ['^(go )?e(ast)?$', '_goEast'],
+        ['^(go )?w(est)?$', '_goWest']
     ],
 
     initialize: function() {
