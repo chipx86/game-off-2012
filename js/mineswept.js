@@ -114,7 +114,7 @@ MS.Terminal = Backbone.Model.extend({
 
     write: function(line) {
         var pos = (this._hasPrompt
-                   ? this._lineBuffer.length - this.promptStr.length
+                   ? this._lineBuffer.length + this.promptStr.length
                    : 0);
 
         this._insertText(pos, line || '', true);
