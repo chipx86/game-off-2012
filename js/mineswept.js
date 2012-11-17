@@ -269,10 +269,12 @@ MS.Terminal = Backbone.Model.extend({
 MS.Buffer = function(pre) {
     this.append = function(s) {
         pre.textContent += s;
+        pre.scrollTop = pre.scrollHeight;
     };
 
     this.set = function(s) {
         pre.textContent = s;
+        pre.scrollTop = pre.scrollHeight;
     };
 
     this.get = function(s) {
@@ -284,7 +286,8 @@ MS.Buffer = function(pre) {
 
 
 MS.TerminalView = Backbone.View.extend({
-    el: $('#terminal'),
+    tagName: 'pre',
+    id: 'terminal',
 
     initialize: function() {
         this.model.set('buffer', new MS.Buffer(this.el));
@@ -299,17 +302,18 @@ MS.TerminalView = Backbone.View.extend({
     },
 
     render: function() {
-        this._updateSize();
-
         $(window).resize(_.bind(this._updateSize, this));
+        this._updateSize();
 
         return this;
     },
 
     _updateSize: function() {
+        var margin = parseInt(this.$el.css('margin'), 10);
+
         this.$el
-            .outerWidth($(document).width())
-            .outerHeight($(document).height());
+            .outerWidth($(document).width() - margin - 10)
+            .outerHeight($(document).height() - margin - 10);
     }
 });
 
@@ -439,6 +443,9 @@ MS.GameView = Backbone.View.extend({
     },
 
     render: function() {
+        this.$el
+            .append(this.terminalView.$el);
+
         this.terminalView.render();
 
         return this;
@@ -448,6 +455,7 @@ MS.GameView = Backbone.View.extend({
 
 $(document).ready(function() {
     var gameView = new MS.GameView({
+        el: document.body,
         model: new MS.Game()
     });
 
