@@ -9,6 +9,150 @@ MS.KeyCodes = {
 };
 
 
+MS.Player = Backbone.Model.extend({
+    defaults: {
+        x: 0,
+        y: 0
+    }
+});
+
+
+MS.Room = Backbone.Model.extend({
+    defaults: {
+        description: ''
+    },
+
+    initialize: function() {
+    },
+
+    enter: function() {
+    },
+
+    getDescription: function() {
+        return this.get('description');
+    }
+});
+
+
+MS.MineSweeperRoom = Backbone.Model.extend({
+    defaults: _.defaults({
+        flagged: false,
+        mine: false,
+        number: 0,
+        numberShown: false
+    }, MS.Room.prototype.defaults),
+
+    enter: function() {
+    },
+
+    getDescription: function() {
+        if (this.get('flagged')) {
+            return "Right or wrong, you flagged this area before";
+        } else if (this.get('numberShown')) {
+            return "According to your brilliant deduction, there should be " +
+                   this.get('number') + "mines nearby.";
+        } else {
+            return this.get('number') + ', ' + this.get('mine');
+            return "Just think, you might be stepping on a mine right now.";
+        }
+    }
+});
+
+
+MS.MineField = Backbone.Model.extend({
+    defaults: {
+        width: 20,
+        height: 20,
+        minesPct: 0.2
+    },
+
+    _directions: [
+        [ 0, -1], // Top
+        [ 1, -1], // Top-right
+        [ 1,  0], // Right
+        [ 1,  1], // Bottom-right
+        [ 0,  1], // Bottom
+        [-1,  1], // Bottom-left
+        [-1,  0], // Left
+        [-1, -1]  // Top-left
+    ],
+
+    initialize: function() {
+        var width = this.get('width'),
+            height = this.get('height'),
+            x,
+            y;
+
+        this.rooms = [];
+
+        for (y = 0; y < height; y++) {
+            this.rooms.push([]);
+
+            for (x = 0; x < width; x++) {
+                this.rooms[y].push(new MS.MineSweeperRoom());
+            }
+        }
+
+        this.generateMines();
+    },
+
+    generateMines: function() {
+        var width = this.get('width'),
+            height = this.get('height'),
+            num_mines = width * height * this.get('minesPct'),
+            x,
+            y,
+            i;
+
+        for (i = 0; i < num_mines; i++) {
+            /* Keep going until we place a mine. */
+            for (;;) {
+                var room;
+
+                x = Math.floor(Math.random() * width);
+                y = Math.floor(Math.random() * height);
+                room = this.rooms[y][x];
+
+                /*
+                 * Only mark this as a mine if it's not already a mine
+                 * and if there's no adjacent mine.
+                 */
+                if (!room.get('mine') && this._countAdjacentMines(x, y) < 2) {
+                    room.set('mine', true);
+                    break;
+                }
+            }
+        }
+
+        /* Now set the neighbor counts. */
+        for (y = 0; y < height; y++) {
+            for (x = 0; x < width; x++) {
+                var room = this.rooms[y][x];
+
+                room.set('number', this._countAdjacentMines(x, y));
+            }
+        }
+    },
+
+    _countAdjacentMines: function(x, y) {
+        var width = this.get('width'),
+            height = this.get('height'),
+            count = 0;
+
+        _.each(this._directions, function(dir) {
+            var roomX = x + dir[0],
+                roomY = y + dir[1];
+
+            if (roomX >= 0 && roomX < width &&
+                roomY >= 0 && roomY < height &&
+                this.rooms[roomY][roomX].get('mine')) {
+                count++;
+            }
+        }, this);
+
+        return count;
+    }
+});
 
 
 MS.Terminal = Backbone.Model.extend({
@@ -197,6 +341,8 @@ MS.Game = Backbone.Model.extend({
         var newCommands = [];
 
         this.terminal = new MS.Terminal();
+        this.mineField = new MS.MineField();
+        this.player = new MS.Player();
 
         this.terminal.on('lineEntered', this._handleCommand, this);
 
@@ -216,6 +362,10 @@ MS.Game = Backbone.Model.extend({
         this.terminal.writeLine(this.introText);
         this.terminal.writeLine();
         this.terminal.showPrompt();
+
+        this._enterRoom(
+            Math.floor(Math.random() * this.mineField.get('width')),
+            Math.floor(Math.random() * this.mineField.get('height')));
     },
 
     _handleCommand: function(line) {
@@ -236,16 +386,47 @@ MS.Game = Backbone.Model.extend({
         return false;
     },
 
+    _enterRoom: function(x, y) {
+        var room = this.mineField.rooms[y][x],
+            description = room.getDescription();
+
+        if (description) {
+            this.terminal.writeLine(description);
+        }
+
+        this.player.set({
+            x: x,
+            y: y
+        });
+
+        room.enter();
+    },
+
     _goNorth: function() {
+        this._goToRoom(this.player.get('x'), this.player.get('y') - 1);
     },
 
     _goSouth: function() {
+        this._goToRoom(this.player.get('x'), this.player.get('y') + 1);
     },
 
     _goEast: function() {
+        this._goToRoom(this.player.get('x') + 1, this.player.get('y'));
     },
 
     _goWest: function() {
+        this._goToRoom(this.player.get('x') - 1, this.player.get('y'));
+    },
+
+    _goToRoom: function(x, y) {
+        if (x >= 0 && x < this.mineField.get('width') &&
+            y >= 0 && y < this.mineField.get('height')) {
+            this._enterRoom(x, y);
+        } else {
+            this.terminal.writeLine(
+                "You tried running into a brick wall, but surprisingly, you " +
+                "came out the loser.");
+        }
     }
 });
 
