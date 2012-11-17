@@ -128,7 +128,9 @@ MS.MineField = Backbone.Model.extend({
             for (x = 0; x < width; x++) {
                 var room = this.rooms[y][x];
 
-                room.set('number', this._countAdjacentMines(x, y));
+                if (!room.get('mine')) {
+                    room.set('number', this._countAdjacentMines(x, y));
+                }
             }
         }
     },
