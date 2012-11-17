@@ -318,6 +318,60 @@ MS.TerminalView = Backbone.View.extend({
 });
 
 
+MS.MapView = Backbone.View.extend({
+    tagName: 'table',
+    id: 'map',
+
+    initialize: function() {
+        this.options.game.player.on('change:x change:y',
+                                    this._updatePlayerPos, this);
+    },
+
+    _updatePlayerPos: function() {
+        var player = this.options.game.player,
+            x = player.get('x'),
+            y = player.get('y'),
+            cell = $(this.el.rows[y].cells[x]);
+
+        if (this._curCell) {
+            this._curCell.removeClass('cur');
+        }
+
+        cell.addClass('cur');
+        this._curCell = cell;
+    },
+
+    render: function() {
+        var mineField = this.options.game.mineField,
+            width = mineField.get('width'),
+            height = mineField.get('height'),
+            x,
+            y;
+
+        for (y = 0; y < height; y++) {
+            var row = $('<tr/>');
+
+            for (x = 0; x < width; x++) {
+                var room = mineField.rooms[y][x],
+                    s = '';
+
+                if (room.get('flagged')) {
+                    s = 'F';
+                } else if (room.get('number') !== 0) {
+                    s = room.get('number');
+                }
+
+                row.append($('<td/>').text(s));
+            }
+
+            this.$el.append(row);
+        }
+
+        return this;
+    }
+});
+
+
 MS.Game = Backbone.Model.extend({
     introText: [
         "A late-night gelato run. Sounded like a good idea, only you didn't",
@@ -440,12 +494,18 @@ MS.GameView = Backbone.View.extend({
         this.terminalView = new MS.TerminalView({
             model: this.model.terminal
         });
+
+        this.mapView = new MS.MapView({
+            game: this.model
+        });
     },
 
     render: function() {
         this.$el
+            .append(this.mapView.$el)
             .append(this.terminalView.$el);
 
+        this.mapView.render();
         this.terminalView.render();
 
         return this;

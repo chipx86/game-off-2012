@@ -13,3 +13,21 @@ body {
   margin: 1em;
   overflow: hidden;
 }
+
+#map {
+  background: #666633;
+  border-collapse: collapse;
+  font-weight: bold;
+  font-family: monospace;
+  float: right;
+  margin: 1em;
+}
+
+#map td {
+  border: 1px #555522 solid;
+  padding: 0 0.4em;
+}
+
+#map td.cur {
+  background: #888855;
+}
