@@ -52,7 +52,6 @@ MS.MineSweeperRoom = Backbone.Model.extend({
             return "According to your brilliant deduction, there should be " +
                    this.get('number') + "mines nearby.";
         } else {
-            return this.get('number') + ', ' + this.get('mine');
             return "Just think, you might be stepping on a mine right now.";
         }
     }
