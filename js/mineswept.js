@@ -60,8 +60,8 @@ MS.MineSweeperRoom = Backbone.Model.extend({
 
 MS.MineField = Backbone.Model.extend({
     defaults: {
-        width: 20,
-        height: 20,
+        width: 15,
+        height: 15,
         minesPct: 0.2
     },
 

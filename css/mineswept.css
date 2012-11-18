@@ -15,19 +15,24 @@ body {
 }
 
 #map {
-  background: #666633;
+  background: #363636;
   border-collapse: collapse;
   font-weight: bold;
   font-family: monospace;
   float: right;
-  margin: 1em;
+  margin: 1.5em;
 }
 
 #map td {
-  border: 1px #555522 solid;
-  padding: 0 0.4em;
+  border: 1px #006000 solid;
+  color: #00DD00;
+  width: 1.3em;
+  height: 1.3em;
+  text-align: center;
+  vertical-align: middle;
 }
 
 #map td.cur {
-  background: #888855;
+  color: #333333;
+  background: #00DD00;
 }
