@@ -116,9 +116,9 @@ MS.Rooms = Backbone.Collection.extend({
 
 MS.MineField = Backbone.Model.extend({
     defaults: {
-        width: 15,
-        height: 15,
-        minesPct: 0.2
+        width: 6,
+        height: 6,
+        minesPct: 0.3
     },
 
     _directions: [
