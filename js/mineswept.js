@@ -572,10 +572,19 @@ MS.Game = Backbone.Model.extend({
 
         if (room.get('mine')) {
             console.log("BOOM");
+            this.gameOver();
             room.set('exploded', true);
         } else {
             room.set('cleared', true);
         }
+    },
+
+    gameOver: function() {
+        this.mineField.roomsList.each(function(room) {
+            if (room.get('mine') && !room.get('flagged')) {
+                room.set('mineShown', true);
+            }
+        }, this);
     }
 });
 _.extend(MS.Game.prototype, MS.CommandsMixin);
