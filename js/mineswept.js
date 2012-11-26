@@ -43,10 +43,35 @@ MS.KeyCodes = {
 };
 
 
+MS.Item = Backbone.Model.extend({
+    name: null,
+    commands: [],
+
+    defaults: {
+        game: null
+    },
+
+    initialize: function() {
+        this.compileCommands();
+    }
+});
+_.extend(MS.Item.prototype, MS.CommandsMixin);
+
+
+MS.Items = Backbone.Collection.extend({
+    model: MS.Item
+});
+
+
 MS.Player = Backbone.Model.extend({
     defaults: {
         x: 0,
         y: 0
+    },
+
+    initialize: function() {
+        this.items = new MS.Items();
+        this.items.add(new MS.Note());
     }
 });
 
@@ -452,7 +477,7 @@ MS.Game = Backbone.Model.extend({
         this.mineField = new MS.MineField();
         this.player = new MS.Player();
 
-        this.terminal.on('lineEntered', this.handleCommand, this);
+        this.terminal.on('lineEntered', this._onLineEntered, this);
 
         this.compileCommands();
     },
@@ -468,6 +493,20 @@ MS.Game = Backbone.Model.extend({
         this._enterRoom(
             Math.floor(Math.random() * this.mineField.get('width')),
             Math.floor(Math.random() * this.mineField.get('height')));
+    },
+
+    _onLineEntered: function(line) {
+        if (!this.handleCommand(line)) {
+            var items = this.player.items,
+                len = items.length,
+                i;
+
+            for (i = 0; i < len; i++) {
+                if (items.at(i).handleCommand(line)) {
+                    return;
+                }
+            }
+        }
     },
 
     _enterRoom: function(x, y) {
