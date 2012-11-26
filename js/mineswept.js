@@ -473,7 +473,9 @@ MS.Game = Backbone.Model.extend({
         ['^(go )?n(orth)?$', '_goNorth'],
         ['^(go )?s(outh)?$', '_goSouth'],
         ['^(go )?e(ast)?$', '_goEast'],
-        ['^(go )?w(est)?$', '_goWest']
+        ['^(go )?w(est)?$', '_goWest'],
+        ['^f(lag)?$', '_toggleFlag'],
+        ['^c(leared)?$', '_markCleared']
     ],
 
     initialize: function() {
@@ -528,6 +530,7 @@ MS.Game = Backbone.Model.extend({
             this.terminal.writeLine(description);
         }
 
+        this.set('room', room);
         room.enter();
     },
 
@@ -555,6 +558,23 @@ MS.Game = Backbone.Model.extend({
             this.terminal.writeLine(
                 "You tried running into a brick wall, but surprisingly, you " +
                 "came out the loser.");
+        }
+    },
+
+    _toggleFlag: function() {
+        var room = this.get('room');
+
+        room.set('flagged', !room.get('flagged'));
+    },
+
+    _markCleared: function() {
+        var room = this.get('room');
+
+        if (room.get('mine')) {
+            console.log("BOOM");
+            room.set('exploded', true);
+        } else {
+            room.set('cleared', true);
         }
     }
 });
