@@ -585,6 +585,13 @@ MS.Game = Backbone.Model.extend({
                 room.set('mineShown', true);
             }
         }, this);
+
+        this.terminal.writeLine();
+        this.terminal.writeLine('*BOOM*');
+        this.terminal.writeLine();
+        this.terminal.writeLine('Looks like you made a mess of yourself.');
+        this.terminal.writeLine();
+        this.terminal.writeLine('GAME OVER');
     }
 });
 _.extend(MS.Game.prototype, MS.CommandsMixin);
