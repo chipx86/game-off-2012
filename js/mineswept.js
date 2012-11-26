@@ -408,10 +408,6 @@ MS.MapView = Backbone.View.extend({
             this._curCell.removeClass('cur');
         }
 
-        if (room.get('number') !== 0) {
-            room.set('numberShown', true);
-        }
-
         this._updateRoom(x, y);
 
         cell.addClass('cur');
