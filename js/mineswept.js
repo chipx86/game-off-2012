@@ -78,7 +78,16 @@ MS.Player = Backbone.Model.extend({
 
 MS.Room = Backbone.Model.extend({
     defaults: {
-        description: ''
+        description: '',
+        x: null,
+        y: null,
+        cleared: false,
+        flagged: false,
+        mine: false,
+        number: 0,
+        numberShown: false,
+        exploded: false,
+        mineShown: false
     },
 
     initialize: function() {
@@ -88,27 +97,8 @@ MS.Room = Backbone.Model.extend({
     },
 
     getDescription: function() {
-        return this.get('description');
-    }
-});
-
-
-MS.MineSweeperRoom = Backbone.Model.extend({
-    defaults: _.defaults({
-        flagged: false,
-        mine: false,
-        number: 0,
-        numberShown: false,
-        exploded: false,
-        mineShown: false
-    }, MS.Room.prototype.defaults),
-
-    enter: function() {
-    },
-
-    getDescription: function() {
         if (this.get('flagged')) {
-            return "Right or wrong, you flagged this area before";
+            return "Right or wrong, you flagged this area before.";
         } else if (this.get('numberShown')) {
             return "A big number " + this.get('number') + " is plastered " +
                    "on the ground.";
@@ -116,6 +106,11 @@ MS.MineSweeperRoom = Backbone.Model.extend({
             return "Just think, you might be stepping on a mine right now.";
         }
     }
+});
+
+
+MS.Rooms = Backbone.Collection.extend({
+    model: MS.Room
 });
 
 
@@ -144,16 +139,27 @@ MS.MineField = Backbone.Model.extend({
             y;
 
         this.rooms = [];
+        this.roomsList = new MS.Rooms();
 
         for (y = 0; y < height; y++) {
             this.rooms.push([]);
 
             for (x = 0; x < width; x++) {
-                this.rooms[y].push(new MS.MineSweeperRoom());
+                var room = new MS.Room({
+                    x: x,
+                    y: y
+                });
+
+                this.roomsList.add(room);
+                this.rooms[y].push(room);
             }
         }
 
         this.generateMines();
+
+        this.roomsList.on('change', function(room) {
+            this.trigger('roomChanged', room.get('x'), room.get('y'));
+        }, this);
     },
 
     generateMines: function() {
@@ -387,6 +393,8 @@ MS.MapView = Backbone.View.extend({
     initialize: function() {
         this.options.game.player.on('change:x change:y',
                                     this._updatePlayerPos, this);
+
+        this.options.game.mineField.on('roomChanged', this._updateRoom, this);
     },
 
     _updatePlayerPos: function() {
