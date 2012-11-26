@@ -3,6 +3,40 @@
 
 var MS = {};
 
+
+MS.CommandsMixin = {
+    compileCommands: function() {
+        var newCommands = [];
+
+        _.each(this.commands, function(item) {
+            var r = new RegExp(item[0]);
+            r.compile(r);
+            newCommands.push([r, item[1]]);
+        });
+
+        this.commands = newCommands;
+    },
+
+    handleCommand: function(line) {
+        var len = this.commands.length,
+            i;
+
+        for (i = 0; i < len; i++) {
+            var item = this.commands[i],
+                m = item[0].exec(line);
+
+            if (m) {
+                this[item[1]](m);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+};
+
+
 MS.KeyCodes = {
     BACKSPACE: 8,
     ENTER: 13
@@ -414,21 +448,13 @@ MS.Game = Backbone.Model.extend({
     ],
 
     initialize: function() {
-        var newCommands = [];
-
         this.terminal = new MS.Terminal();
         this.mineField = new MS.MineField();
         this.player = new MS.Player();
 
-        this.terminal.on('lineEntered', this._handleCommand, this);
+        this.terminal.on('lineEntered', this.handleCommand, this);
 
-        _.each(this.commands, function(item) {
-            var r = new RegExp(item[0]);
-            r.compile(r);
-            newCommands.push([r, item[1]]);
-        });
-
-        this.commands = newCommands;
+        this.compileCommands();
     },
 
     run: function() {
@@ -442,24 +468,6 @@ MS.Game = Backbone.Model.extend({
         this._enterRoom(
             Math.floor(Math.random() * this.mineField.get('width')),
             Math.floor(Math.random() * this.mineField.get('height')));
-    },
-
-    _handleCommand: function(line) {
-        var len = this.commands.length,
-            i;
-
-        for (i = 0; i < len; i++) {
-            var item = this.commands[i],
-                m = item[0].exec(line);
-
-            if (m) {
-                this[item[1]](m);
-
-                return true;
-            }
-        }
-
-        return false;
     },
 
     _enterRoom: function(x, y) {
@@ -507,6 +515,7 @@ MS.Game = Backbone.Model.extend({
         }
     }
 });
+_.extend(MS.Game.prototype, MS.CommandsMixin);
 
 
 MS.GameView = Backbone.View.extend({
