@@ -39,7 +39,9 @@ MS.MineSweeperRoom = Backbone.Model.extend({
         flagged: false,
         mine: false,
         number: 0,
-        numberShown: false
+        numberShown: false,
+        exploded: false,
+        mineShown: false
     }, MS.Room.prototype.defaults),
 
     enter: function() {
@@ -49,8 +51,8 @@ MS.MineSweeperRoom = Backbone.Model.extend({
         if (this.get('flagged')) {
             return "Right or wrong, you flagged this area before";
         } else if (this.get('numberShown')) {
-            return "According to your brilliant deduction, there should be " +
-                   this.get('number') + "mines nearby.";
+            return "A big number " + this.get('number') + " is plastered " +
+                   "on the ground.";
         } else {
             return "Just think, you might be stepping on a mine right now.";
         }
@@ -332,14 +334,38 @@ MS.MapView = Backbone.View.extend({
         var player = this.options.game.player,
             x = player.get('x'),
             y = player.get('y'),
+            room = this.options.game.mineField.rooms[y][x],
             cell = $(this.el.rows[y].cells[x]);
 
         if (this._curCell) {
             this._curCell.removeClass('cur');
         }
 
+        if (room.get('number') !== 0) {
+            room.set('numberShown', true);
+        }
+
+        this._updateRoom(x, y);
+
         cell.addClass('cur');
         this._curCell = cell;
+    },
+
+    _updateRoom: function(x, y) {
+        var room = this.options.game.mineField.rooms[y][x],
+            s = '';
+
+        if (room.get('exploded')) {
+            s = 'X';
+        } else if (room.get('mineShown')) {
+            s = '*';
+        } else if (room.get('flagged')) {
+            s = 'F';
+        } else if (room.get('numberShown')) {
+            s = room.get('number');
+        }
+
+        $(this.el.rows[y].cells[x]).text(s);
     },
 
     render: function() {
@@ -353,16 +379,7 @@ MS.MapView = Backbone.View.extend({
             var row = $('<tr/>');
 
             for (x = 0; x < width; x++) {
-                var room = mineField.rooms[y][x],
-                    s = '';
-
-                if (room.get('flagged')) {
-                    s = 'F';
-                } else if (room.get('number') !== 0) {
-                    s = room.get('number');
-                }
-
-                row.append($('<td/>').text(s));
+                row.append('<td/>');
             }
 
             this.$el.append(row);
@@ -447,16 +464,18 @@ MS.Game = Backbone.Model.extend({
 
     _enterRoom: function(x, y) {
         var room = this.mineField.rooms[y][x],
-            description = room.getDescription();
-
-        if (description) {
-            this.terminal.writeLine(description);
-        }
+            description;
 
         this.player.set({
             x: x,
             y: y
         });
+
+        description = room.getDescription();
+
+        if (description) {
+            this.terminal.writeLine(description);
+        }
 
         room.enter();
     },
