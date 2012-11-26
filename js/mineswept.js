@@ -202,18 +202,28 @@ MS.MineField = Backbone.Model.extend({
         }
     },
 
-    _countAdjacentMines: function(x, y) {
-        var width = this.get('width'),
-            height = this.get('height'),
-            count = 0;
+    eachNeighbor: function(room, func, context) {
+        var x = room.get('x'),
+            y = room.get('y'),
+            width = this.get('width'),
+            height = this.get('height');
 
         _.each(this._directions, function(dir) {
-            var roomX = x + dir[0],
-                roomY = y + dir[1];
+            var newX = x + dir[0],
+                newY = y + dir[1];
 
-            if (roomX >= 0 && roomX < width &&
-                roomY >= 0 && roomY < height &&
-                this.rooms[roomY][roomX].get('mine')) {
+            if (newX >= 0 && newX < width &&
+                newY >= 0 && newY < height) {
+                func.call(context, this.rooms[newY][newX]);
+            }
+        }, this);
+    },
+
+    _countAdjacentMines: function(x, y) {
+        var count = 0;
+
+        this.eachNeighbor(this.rooms[y][x], function(room) {
+            if (room.get('mine')) {
                 count++;
             }
         }, this);
@@ -575,7 +585,21 @@ MS.Game = Backbone.Model.extend({
             this.gameOver();
             room.set('exploded', true);
         } else {
-            room.set('cleared', true);
+            this._markRoomCleared(room);
+        }
+    },
+
+    _markRoomCleared: function(room) {
+        room.set('cleared', true);
+
+        if (room.get('number') > 0) {
+            room.set('numberShown', true);
+        } else {
+            this.mineField.eachNeighbor(room, function(neighbor) {
+                if (!neighbor.get('mine') && !neighbor.get('cleared')) {
+                    this._markRoomCleared(neighbor);
+                }
+            }, this);
         }
     },
 
